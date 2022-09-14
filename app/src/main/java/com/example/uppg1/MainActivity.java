@@ -3,6 +3,7 @@ package com.example.uppg1;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.os.SystemClock;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ClockManager{
 
     private TextView txtClock;
+    TimeManager timeManager = new TimeManager(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch(view.getId()) {
             case R.id.button_start:
                 Toast.makeText(this, "Start button pressed", Toast.LENGTH_SHORT).show();
-                txtClock.setText("Starting...");
+                timeManager.run();
                 break;
 
             case R.id.button_stop:

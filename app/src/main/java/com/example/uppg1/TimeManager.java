@@ -1,5 +1,6 @@
 package com.example.uppg1;
 
+import android.os.StrictMode;
 import android.widget.TextView;
 
 import org.apache.commons.net.ntp.NTPUDPClient;
@@ -12,11 +13,12 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Date;
 
-public class TimeManager {
+public class TimeManager implements Runnable {
     private NTPUDPClient client = null;
     private InetAddress inetAddress = null;
     TimeInfo NTPTime = null;
     ClockManager clockManager = null;
+
 
     /* https://www.pool.ntp.org/zone/se
     List of NTP Servers in Sweden.
@@ -31,10 +33,15 @@ public class TimeManager {
 
     public TimeManager(ClockManager cm) {
         this.clockManager = cm;
+
     }
 
     // Method for getting the network time from the NTP server
     public void getTime() {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                .permitAll()
+                .build();
+        StrictMode.setThreadPolicy(policy);
         if (client == null) {
             client = new NTPUDPClient();
             System.out.println("Creating NTP Client");
@@ -60,5 +67,11 @@ public class TimeManager {
             System.out.println(NTPTime.toString());
             clockManager.updateClock("Time");
         }
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Testing!");
+        this.getTime();
     }
 }
