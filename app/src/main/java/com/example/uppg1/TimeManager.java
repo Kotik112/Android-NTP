@@ -1,24 +1,29 @@
 package com.example.uppg1;
 
+import android.os.Handler;
 import android.os.StrictMode;
+import android.os.SystemClock;
+import android.util.Log;
 import android.widget.TextView;
 
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Date;
 
-public class TimeManager implements Runnable {
+public class TimeManager {
+    private static final String TAG = "TimeManager";
+    
     private NTPUDPClient client = null;
     private InetAddress inetAddress = null;
     TimeInfo NTPTime = null;
-    ClockManager clockManager = null;
-
+    private Handler timeHandler = null;
+    private Runnable timeRunnable;
+    String timeView = "00:00";
 
     /* https://www.pool.ntp.org/zone/se
     List of NTP Servers in Sweden.
@@ -31,47 +36,62 @@ public class TimeManager implements Runnable {
      */
     private final static String NTPServer = "0.se.pool.ntp.org";
 
-    public TimeManager(ClockManager cm) {
-        this.clockManager = cm;
+    public TimeManager(TextView clockText) {
+        if (timeHandler == null) {
+            timeHandler = new Handler();
+        }
+        timeRunnable = new Runnable() {
+            @Override
+            public void run() {
+                clockText.setText(timeView);
+            }
+        };
 
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                while(true) {
+                    timeHandler.post(timeRunnable);
+                    SystemClock.sleep(5000);
+                    Log.d(TAG, "run: TimeManager is updating the time");
+                    Date time = getTime();
+                }
+            }
+        };
     }
 
     // Method for getting the network time from the NTP server
-    public void getTime() {
+    public Date getTime() {
+        // Permits the thread network access.
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll()
                 .build();
         StrictMode.setThreadPolicy(policy);
+
         if (client == null) {
             client = new NTPUDPClient();
-            System.out.println("Creating NTP Client");
         }
         try {
             inetAddress = InetAddress.getByName(NTPServer);
-        } catch (IOException e) {
+        } catch (UnknownHostException e) {
+            Log.d(TAG, "getTime: Error reaching the NTP server for time syncronization.");
             e.printStackTrace();
-            System.out.println("Error getting IP address.");
         }
-        while (true) {
+        while(true) {
             try {
                 client.open();
-                client.setDefaultTimeout(5000);
-                NTPTime =  client.getTime(inetAddress);
+                client.setSoTimeout(3000);
+                NTPTime = client.getTime(inetAddress);
                 break;
+            } catch (SocketException e) {
+                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
-                // TODO: Add specific error message depending on exception (SocketException and IOExcept)
-                System.out.println("Error occurred opening datagram socket at the local host.");
-                System.out.println("Alternatively, error getting the time.");
-            }  //Update system clock update here? In finally { block }
-            System.out.println(NTPTime.toString());
-            clockManager.updateClock("Time");
+            }
         }
-    }
+        long timeLong = NTPTime.getOffset();
 
-    @Override
-    public void run() {
-        System.out.println("Testing!");
-        this.getTime();
+
+        return new Date(timeLong);
     }
 }

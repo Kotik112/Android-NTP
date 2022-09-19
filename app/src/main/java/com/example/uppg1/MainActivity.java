@@ -2,19 +2,23 @@ package com.example.uppg1;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ClockManager{
+public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
 
     private TextView txtClock;
-    TimeManager timeManager = new TimeManager(this);
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,34 +26,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         txtClock = findViewById(R.id.txt_data);
-        Button btnStart = findViewById(R.id.button_start);
-        Button btnStop = findViewById(R.id.button_stop);
+        Button connectionStatus = findViewById(R.id.status_button);
 
-        btnStart.setOnClickListener(this);
-        btnStop.setOnClickListener(this);
+        new TimeManager(txtClock);
+
+        Log.d(TAG, "onCreate: test!");
+
     }
 
-    @Override
-    public void onClick(View view) {
-        switch(view.getId()) {
-            case R.id.button_start:
-                Toast.makeText(this, "Start button pressed", Toast.LENGTH_SHORT).show();
-                timeManager.run();
-                break;
 
-            case R.id.button_stop:
-                Toast.makeText(this, "Stop button pressed", Toast.LENGTH_SHORT).show();
-                txtClock.setText("Stopping....");
-                break;
 
-            default:
-                break;
+    public boolean getInternetConnection() {
+        boolean isConnected = false;
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo[] networkList = connectivityManager.getAllNetworkInfo();
+        for(NetworkInfo network : networkList){
+            if (network.getTypeName().equalsIgnoreCase("WIFI"))
+                if (network.isConnected())
+                    isConnected = true;
+            if (network.getTypeName().equalsIgnoreCase("MOBILE DATA"))
+                if (network.isConnected())
+                    isConnected = true;
+        }
+        if (isConnected) {
+            Log.d(TAG, "getInternetConnection: Device online");
+            return true;
+        } else {
+            Log.d(TAG, "getInternetConnection: Device offline.");
+            return false;
         }
     }
 
-    // Used by ClockManager interface to update the time view
-    @Override
-    public void updateClock(String time) {
-        txtClock.setText(time);
-    }
+
 }
