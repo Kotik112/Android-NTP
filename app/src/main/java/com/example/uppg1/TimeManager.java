@@ -1,5 +1,7 @@
 package com.example.uppg1;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.os.SystemClock;
@@ -23,7 +25,9 @@ public class TimeManager {
     TimeInfo NTPTime = null;
     private Handler timeHandler = null;
     private Runnable timeRunnable;
-    String timeView = "00:00";
+    String timeString = "00:00";
+    private long offset = 0;
+    long ntpTime = 0;
 
 
     /* https://www.pool.ntp.org/zone/se
@@ -44,7 +48,10 @@ public class TimeManager {
         timeRunnable = new Runnable() {
             @Override
             public void run() {
-                clockText.setText(timeView);
+                long timeNow = System.currentTimeMillis();
+                long adjustedTime = timeNow + offset;
+                timeString = new Date(adjustedTime).toString();
+                clockText.setText(timeString);
             }
         };
 
@@ -55,11 +62,8 @@ public class TimeManager {
                     timeHandler.post(timeRunnable);
                     SystemClock.sleep(3000);
                     Log.d(TAG, "run: TimeManager is updating the time");
-                    Date tempTime = getTime();
-                    timeView = tempTime.toString();
 
-                    Log.d(TAG, "run: Grabbed time in Date time var.");
-                    //System.out.println(timeView);
+                    timeString = getTime().toString();
 
                 }
             }
@@ -81,7 +85,7 @@ public class TimeManager {
         try {
             inetAddress = InetAddress.getByName(NTPServer);
         } catch (UnknownHostException e) {
-            //Log.d(TAG, "getTime: Error reaching the NTP server for time syncronization.");
+            Log.d(TAG, "getTime: Error reaching the NTP server for time syncronization.");
             e.printStackTrace();
         }
         while(true) {
@@ -95,18 +99,25 @@ public class TimeManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
-        long returnedTime  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
+        ntpTime  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
 
         //WIP: Figuring out offset
 
-        long systemTime = System.currentTimeMillis();
-        Log.d(TAG, "getTime: " + systemTime);
-        long offset = systemTime - returnedTime;
-        Date dateOffset = new Date(offset);
-        Log.d(TAG, "getTime: " + dateOffset.toString());
+        long timeNow = System.currentTimeMillis();
+        Log.d(TAG, "getTime: SysTime = " + timeNow);
+        Log.d(TAG, "getTime: NTPTime = " + ntpTime);
+        offset = ntpTime - timeNow;
+        Log.d(TAG, "getTime: offset = " + offset);
+
+        long returnedTime = timeNow + offset;
 
 
         return new Date(returnedTime);
     }
+
+
 }
+
+

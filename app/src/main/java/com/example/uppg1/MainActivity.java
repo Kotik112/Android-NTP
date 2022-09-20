@@ -13,12 +13,14 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Date;
+
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private TextView txtClock;
-
+    Button connectionStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,22 +28,46 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         txtClock = findViewById(R.id.txt_data);
-        Button connectionStatus = findViewById(R.id.status_button);
+        connectionStatus = findViewById(R.id.status_button);
 
-        new TimeManager(txtClock);
+        boolean connectionStatus = isConnectedToInternet();
+        if (false) { // isConnectedToInternet ()
+            new TimeManager(txtClock);
+        } else {
+            Log.d(TAG, "onCreate: Running offline mode.");
+            long systemTime = System.currentTimeMillis();
+            Date now = new Date(systemTime);
+            txtClock.setText(now.toString());
+        }
+        
+    }
 
-
+    public void onPress(View view) {
+        Log.d(TAG, "onCreate: checking connection!");
         if (isConnectedToInternet()) {
-            Log.d(TAG, "onCreate: checking connection!");
+            Log.d(TAG, "onPress: Online");
             connectionStatus.setText("Online");
         } else {
             connectionStatus.setText("Offline");
+            Log.d(TAG, "onPress: offline");
         }
     }
 
+    public boolean isConnectedToInternet() {
+        ConnectivityManager connectivity = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (connectivity != null) {
+            NetworkInfo[] info = connectivity.getAllNetworkInfo();
+            if (info != null)
+                for (int i = 0; i < info.length; i++)
+                    if (info[i].getState() == NetworkInfo.State.CONNECTED) {
+                        Log.v(this.getClass().getName(), info[i].toString());
+                        return true;
+                    }
+        }
+        return false;
+    }
 
-
-    public boolean getInternetConnection() {
+    /* public boolean getInternetConnection() {
         boolean isConnected = false;
         ConnectivityManager connectivityManager =
                 (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
@@ -61,20 +87,6 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "getInternetConnection: Device offline.");
             return false;
         }
-    }
+    } */
 
-    public boolean isConnectedToInternet() {
-        ConnectivityManager connectivity = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        if (connectivity != null) {
-            NetworkInfo[] info = connectivity.getAllNetworkInfo();
-            if (info != null)
-                for (int i = 0; i < info.length; i++)
-                    if (info[i].getState() == NetworkInfo.State.CONNECTED) {
-                        Log.v(this.getClass().getName(), info[i].toString());
-                        return true;
-                    }
-
-        }
-        return false;
-    }
 }

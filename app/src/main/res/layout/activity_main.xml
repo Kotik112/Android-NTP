@@ -20,6 +20,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/status_button"
             android:text="..."
+            android:onClick="onPress"
             />
 
     </RelativeLayout>
