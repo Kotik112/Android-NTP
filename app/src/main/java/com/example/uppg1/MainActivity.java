@@ -28,14 +28,15 @@ public class MainActivity extends AppCompatActivity {
         txtClock = findViewById(R.id.txt_data);
         Button connectionStatus = findViewById(R.id.status_button);
 
+        new TimeManager(txtClock);
 
-        Log.d(TAG, "onCreate: test!");
+
         if (isConnectedToInternet()) {
+            Log.d(TAG, "onCreate: checking connection!");
             connectionStatus.setText("Online");
         } else {
             connectionStatus.setText("Offline");
         }
-        new TimeManager(txtClock);
     }
 
 
