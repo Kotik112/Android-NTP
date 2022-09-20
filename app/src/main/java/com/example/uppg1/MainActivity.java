@@ -28,10 +28,18 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initializing UI elements
         txtClock = findViewById(R.id.txt_data);
         connectionStatus = findViewById(R.id.status_button);
+
+        // Running and creating a timeManager object.
         timeManager = new TimeManager(txtClock);
-        
+
+        /*
+        Checks if the device has an internet connection and sets timeManager's connection
+        status to match the device status.
+        This variable is in turn used to adjust the timeManager's behaviour accordingly.
+        */
         if (isConnectedToInternet()) { //
             Toast.makeText(this, "Online mode", Toast.LENGTH_SHORT).show();
             timeManager.isConnected = true;
