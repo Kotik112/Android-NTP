@@ -25,6 +25,7 @@ public class TimeManager {
     private Runnable timeRunnable;
     String timeView = "00:00";
 
+
     /* https://www.pool.ntp.org/zone/se
     List of NTP Servers in Sweden.
     I decided on "0.se.pool.ntp.org" after comparing the response time of the available servers.
@@ -52,12 +53,18 @@ public class TimeManager {
             public void run() {
                 while(true) {
                     timeHandler.post(timeRunnable);
-                    SystemClock.sleep(5000);
+                    SystemClock.sleep(3000);
                     Log.d(TAG, "run: TimeManager is updating the time");
-                    Date time = getTime();
+                    Date tempTime = getTime();
+                    timeView = tempTime.toString();
+
+                    Log.d(TAG, "run: Grabbed time in Date time var.");
+                    //System.out.println(timeView);
+
                 }
             }
         };
+        thread.start();
     }
 
     // Method for getting the network time from the NTP server
@@ -74,7 +81,7 @@ public class TimeManager {
         try {
             inetAddress = InetAddress.getByName(NTPServer);
         } catch (UnknownHostException e) {
-            Log.d(TAG, "getTime: Error reaching the NTP server for time syncronization.");
+            //Log.d(TAG, "getTime: Error reaching the NTP server for time syncronization.");
             e.printStackTrace();
         }
         while(true) {
@@ -89,9 +96,17 @@ public class TimeManager {
                 e.printStackTrace();
             }
         }
-        long timeLong = NTPTime.getOffset();
+        long returnedTime  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
+
+        //WIP: Figuring out offset
+
+        long systemTime = System.currentTimeMillis();
+        Log.d(TAG, "getTime: " + systemTime);
+        long offset = systemTime - returnedTime;
+        Date dateOffset = new Date(offset);
+        Log.d(TAG, "getTime: " + dateOffset.toString());
 
 
-        return new Date(timeLong);
+        return new Date(returnedTime);
     }
 }

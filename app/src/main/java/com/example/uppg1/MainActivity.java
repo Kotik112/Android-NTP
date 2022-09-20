@@ -28,17 +28,22 @@ public class MainActivity extends AppCompatActivity {
         txtClock = findViewById(R.id.txt_data);
         Button connectionStatus = findViewById(R.id.status_button);
 
-        new TimeManager(txtClock);
 
         Log.d(TAG, "onCreate: test!");
-
+        if (isConnectedToInternet()) {
+            connectionStatus.setText("Online");
+        } else {
+            connectionStatus.setText("Offline");
+        }
+        new TimeManager(txtClock);
     }
 
 
 
     public boolean getInternetConnection() {
         boolean isConnected = false;
-        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
         NetworkInfo[] networkList = connectivityManager.getAllNetworkInfo();
         for(NetworkInfo network : networkList){
             if (network.getTypeName().equalsIgnoreCase("WIFI"))
@@ -57,5 +62,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public boolean isConnectedToInternet() {
+        ConnectivityManager connectivity = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (connectivity != null) {
+            NetworkInfo[] info = connectivity.getAllNetworkInfo();
+            if (info != null)
+                for (int i = 0; i < info.length; i++)
+                    if (info[i].getState() == NetworkInfo.State.CONNECTED) {
+                        Log.v(this.getClass().getName(), info[i].toString());
+                        return true;
+                    }
 
+        }
+        return false;
+    }
 }
