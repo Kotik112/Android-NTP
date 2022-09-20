@@ -22,12 +22,12 @@ public class TimeManager {
     
     private NTPUDPClient client = null;
     private InetAddress inetAddress = null;
-    TimeInfo NTPTime = null;
+    private TimeInfo NTPTime = null;
     private Handler timeHandler = null;
     private Runnable timeRunnable;
     String timeString = "00:00";
-    private long offset = 0;
-    long ntpTime = 0;
+    //Used by MainActivity to set the connection status. Defaults to false (no connection)
+    public boolean isConnected = false;
 
 
     /* https://www.pool.ntp.org/zone/se
@@ -48,9 +48,6 @@ public class TimeManager {
         timeRunnable = new Runnable() {
             @Override
             public void run() {
-                long timeNow = System.currentTimeMillis();
-                long adjustedTime = timeNow + offset;
-                timeString = new Date(adjustedTime).toString();
                 clockText.setText(timeString);
             }
         };
@@ -59,12 +56,11 @@ public class TimeManager {
             @Override
             public void run() {
                 while(true) {
+                    // Posts or performs the timeRunnable's run function inside the infinite loop.
                     timeHandler.post(timeRunnable);
-                    SystemClock.sleep(3000);
+                    SystemClock.sleep(1000);
                     Log.d(TAG, "run: TimeManager is updating the time");
-
                     timeString = getTime().toString();
-
                 }
             }
         };
@@ -82,16 +78,25 @@ public class TimeManager {
         if (client == null) {
             client = new NTPUDPClient();
         }
+
         try {
             inetAddress = InetAddress.getByName(NTPServer);
         } catch (UnknownHostException e) {
-            Log.d(TAG, "getTime: Error reaching the NTP server for time syncronization.");
+            Log.d(TAG, "getTime: Error reaching the NTP server for time synchronization.");
             e.printStackTrace();
         }
+
         while(true) {
+            // If there is no internet connection, return System time.
+            if(!isConnected) {
+                long timeNow = System.currentTimeMillis();
+                Log.d(TAG, "getTime: Returning system time.");
+                return new Date(timeNow);
+            }
             try {
                 client.open();
                 client.setSoTimeout(3000);
+                // Get time from NTP server. TimeInfo object returned.
                 NTPTime = client.getTime(inetAddress);
                 break;
             } catch (SocketException e) {
@@ -99,25 +104,18 @@ public class TimeManager {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
-        ntpTime  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
 
-        //WIP: Figuring out offset
+        long ntpTime  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
 
         long timeNow = System.currentTimeMillis();
-        Log.d(TAG, "getTime: SysTime = " + timeNow);
         Log.d(TAG, "getTime: NTPTime = " + ntpTime);
-        offset = ntpTime - timeNow;
+        long offset = ntpTime - timeNow;
         Log.d(TAG, "getTime: offset = " + offset);
+        long adjustedTime = timeNow + offset;
 
-        long returnedTime = timeNow + offset;
-
-
-        return new Date(returnedTime);
+        return new Date(adjustedTime);
     }
-
-
 }
 
 

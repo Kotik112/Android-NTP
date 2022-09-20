@@ -20,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private TextView txtClock;
-    Button connectionStatus;
+    private Button connectionStatus;
+    private TimeManager timeManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,27 +30,29 @@ public class MainActivity extends AppCompatActivity {
 
         txtClock = findViewById(R.id.txt_data);
         connectionStatus = findViewById(R.id.status_button);
-
-        boolean connectionStatus = isConnectedToInternet();
-        if (false) { // isConnectedToInternet ()
-            new TimeManager(txtClock);
+        timeManager = new TimeManager(txtClock);
+        
+        if (isConnectedToInternet()) { //
+            Toast.makeText(this, "Online mode", Toast.LENGTH_SHORT).show();
+            timeManager.isConnected = true;
         } else {
-            Log.d(TAG, "onCreate: Running offline mode.");
-            long systemTime = System.currentTimeMillis();
-            Date now = new Date(systemTime);
-            txtClock.setText(now.toString());
+
+            Toast.makeText(this, "Offline mode", Toast.LENGTH_SHORT).show();
+            timeManager.isConnected = false;
+
         }
         
     }
 
+    // Checks for an internet connection when pressed. Used to check the network status.
     public void onPress(View view) {
-        Log.d(TAG, "onCreate: checking connection!");
+        Log.d(TAG, "onPress: checking connection!");
         if (isConnectedToInternet()) {
-            Log.d(TAG, "onPress: Online");
+            Log.d(TAG, "onPress: Running online mode.");
             connectionStatus.setText("Online");
         } else {
+            Log.d(TAG, "onCreate: Running offline mode.");
             connectionStatus.setText("Offline");
-            Log.d(TAG, "onPress: offline");
         }
     }
 
@@ -66,27 +69,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
-    /* public boolean getInternetConnection() {
-        boolean isConnected = false;
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
-        NetworkInfo[] networkList = connectivityManager.getAllNetworkInfo();
-        for(NetworkInfo network : networkList){
-            if (network.getTypeName().equalsIgnoreCase("WIFI"))
-                if (network.isConnected())
-                    isConnected = true;
-            if (network.getTypeName().equalsIgnoreCase("MOBILE DATA"))
-                if (network.isConnected())
-                    isConnected = true;
-        }
-        if (isConnected) {
-            Log.d(TAG, "getInternetConnection: Device online");
-            return true;
-        } else {
-            Log.d(TAG, "getInternetConnection: Device offline.");
-            return false;
-        }
-    } */
-
 }
