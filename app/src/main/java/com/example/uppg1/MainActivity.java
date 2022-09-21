@@ -2,6 +2,7 @@ package com.example.uppg1;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -53,14 +54,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Checks for an internet connection when pressed. Used to check the network status.
-    public void onPress(View view) {
+    public void onPress(View view) { // Event listener for UI button
         Log.d(TAG, "onPress: checking connection!");
         if (isConnectedToInternet()) {
             Log.d(TAG, "onPress: Running online mode.");
             connectionStatus.setText("Online");
+            connectionStatus.setBackgroundColor(Color.GREEN);
         } else {
             Log.d(TAG, "onCreate: Running offline mode.");
             connectionStatus.setText("Offline");
+            connectionStatus.setBackgroundColor(Color.RED);
         }
     }
 

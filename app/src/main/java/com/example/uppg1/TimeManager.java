@@ -25,7 +25,8 @@ public class TimeManager {
     private TimeInfo NTPTime = null;
     private Handler timeHandler = null;
     private Runnable timeRunnable;
-    String timeString = "00:00";
+    String timeString = "";
+    private long timeReturned, offset;
     //Used by MainActivity to set the connection status. Defaults to false (no connection)
     public boolean isConnected = false;
 
@@ -46,8 +47,11 @@ public class TimeManager {
             timeHandler = new Handler();
         }
         timeRunnable = new Runnable() {
+            /* Having a Runnable inside a while(true) loop was the only way I could
+            find to access an element from a java class that belongs to the MainActivity. */
             @Override
             public void run() {
+                // Set the TextView in MainActivity to timeString.
                 clockText.setText(timeString);
             }
         };
@@ -65,6 +69,13 @@ public class TimeManager {
             }
         };
         thread.start();
+    }
+
+    public long handleAttempts(int attempts) {
+        if (attempts <= 6) {
+            return System.currentTimeMillis();
+        }
+        return -1;
     }
 
     // Method for getting the network time from the NTP server
@@ -86,35 +97,37 @@ public class TimeManager {
             e.printStackTrace();
         }
 
-        while(true) {
+        int loopCounter = 0;
+        while(loopCounter < 6) {
+            loopCounter++;
             // If there is no internet connection, return System time.
             if(!isConnected) {
                 long timeNow = System.currentTimeMillis();
-                Log.d(TAG, "getTime: Returning system time.");
-                return new Date(timeNow);
+                timeReturned = timeNow + offset;
+                //Log.d(TAG, "getTime: Returning system time.");
+                return new Date(timeReturned);
             }
             try {
                 client.open();
                 client.setSoTimeout(3000);
                 // Get time from NTP server. TimeInfo object returned.
                 NTPTime = client.getTime(inetAddress);
+                timeReturned  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
+                long timeNow = System.currentTimeMillis();
+                offset = timeReturned - timeNow;
+                timeReturned = timeNow + offset;
                 break;
             } catch (SocketException e) {
+                Log.d(TAG, "getTime: Error: Socket Exception");
+                timeReturned = handleAttempts(loopCounter);
                 e.printStackTrace();
             } catch (IOException e) {
+                Log.d(TAG, "getTime: Error: IOException");
+                timeReturned = handleAttempts(loopCounter);
                 e.printStackTrace();
             }
         }
-
-        long ntpTime  = NTPTime.getMessage().getTransmitTimeStamp().getTime();
-
-        long timeNow = System.currentTimeMillis();
-        Log.d(TAG, "getTime: NTPTime = " + ntpTime);
-        long offset = ntpTime - timeNow;
-        Log.d(TAG, "getTime: offset = " + offset);
-        long adjustedTime = timeNow + offset;
-
-        return new Date(adjustedTime);
+        return new Date(timeReturned);
     }
 }
 
